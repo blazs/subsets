@@ -1,0 +1,87 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[utf8]{inputenc}
+%\usepackage[slovene]{babel}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{enumerate}
+
+\textwidth=435pt
+\hoffset=0pt
+\oddsidemargin=10pt
+
+\author{Blaž Sovdat\footnote{Email: \texttt{blaz.sovdat@gmail.com}}}
+\title{Generating All $k$-subsets Of a $n$-set}
+
+\begin{document}
+	\maketitle
+	\begin{abstract}
+		This note describes a simple algorithm for generating all subsets of size $k$ of a given set of $n$ elements. 
+	\end{abstract}
+	
+	\section{Introduction}
+		One of the fundamental algorithmic combinatorial problems is generation of all subsets of a given set. Many efficient algorithms are known for this problem. In this note we restric ourselves to generating all subsets of size $k$ of a given set of size $n$.
+		
+		In the next section we describe a very simple algorithm for generating all $\binom{n}{k}$ subsets of size $k$, denoted $k$-subsets, of a given $n$-set in lexiographic order,\footnote{Lexiographic order from the viewpoint of indices.}. We also include C implementation of the algorithm, assuming, without loss of generality, that a $n$-set is $[n]:=\{0,1,\ldots,n-1\}$. (We can always use elements of $[n]$ as indices of some other ``set'' of size $n$.)
+	\section{Simple algorithm for generating all $k$-subsets of a $n$-set}
+		In this section we give a simple algorithm that, given a $n$-set, finds all its $k$-subsets.
+		
+		\subsection{Informal description.}
+			We now give intuitively appealing description of algorithm~\ref{algo:subsets} using binary string $\alpha$ with $k$ ones and $n-k$ zeros, with nonzero indices of $\alpha$ indicating members of the $k$-subset. The problem of generating all $k$-subsets of $n$-set is the one of generating all binary strings $\alpha\in\{0,1\}^n$ of length $n$ with exactly $k$ ones. We can think our algorithm starts with string $\alpha_0 := 11\ldots10\ldots00$ with $k$ initial ones, followed by $n-k$ zeros. (The algorithm does not store $\alpha$ explicitly; see the next subsection.)
+			
+			Suppose we are in $m$-th iteration and that $\alpha_m$ is the current $k$-subset. We then find the rightmost nonzero index $i$ (the largest $i$ such that $\alpha_m[i]=1$ and there is $j>i$ with $\alpha_m[j]=0$) that we can move to the right. We now move this element to the right (the next configuration will thus be $\alpha_{m+1}[i]=0$ and $\alpha_{m+1}[i+1]=1$) and shift all elements $\ell>i$ ``as left as possible''. (See example below.) The resulting $\alpha_{m+1}$ represents a new $k$-subset.
+			
+			We keep repeating the above step until $\alpha_m[n-1]=\alpha_m[n-2]=\ldots=\alpha_m[n-k+1]=1$, which is (lexiographically) the last $k$-subset.
+			
+			The following example illustrates how our algorithm would generate all $2$-subsets of a $5$-set.
+			\paragraph{Example.} Consider set $S:=\{a,b,c,d,e\}$ and suppose we want to generate all pairs of element from $S$. Below are $\alpha$'s that the algorithm would generate, with $S_{\alpha}$ being the set that $\alpha$ represents. (For now ignore the array $p$; it is what algorithm actually keeps during its execution; see the next subsection.)
+			\begin{enumerate}[Step 1)]
+				\item $\alpha=11000$; $p=[0,1]$; $S_{\alpha}=\{a,b\}$.
+				\item $\alpha=10100$; $p=[0,2]$; $S_{\alpha}=\{a,c\}$.
+				\item $\alpha=10010$; $p=[0,3]$; $S_{\alpha}=\{a,d\}$.
+				\item $\alpha=10001$; $p=[0,4]$; $S_{\alpha}=\{a,e\}$.
+				\item $\alpha=01100$; $p=[1,2]$; $S_{\alpha}=\{b,c\}$.
+				\item $\alpha=01010$; $p=[1,3]$; $S_{\alpha}=\{b,d\}$.
+				\item $\alpha=01001$; $p=[1,4]$; $S_{\alpha}=\{b,e\}$.
+				\item $\alpha=00110$; $p=[2,3]$; $S_{\alpha}=\{c,d\}$.
+				\item $\alpha=00101$; $p=[2,4]$; $S_{\alpha}=\{c,e\}$.
+				\item $\alpha=00011$; $p=[3,4]$; $S_{\alpha}=\{d,e\}$.
+			\end{enumerate}
+		% Ideja je, da vzamemo niz $\alpha=11\ldots100\ldots0$, ki ima na zacetku $n$ enic in na koncu $n-k$ ničel. Enice predstavljajo elemente, ki bodo v podmnožici. [Opis z nizom.]
+		\subsection{Formal description}
+			For its working, the algorithm does not need to store $\alpha$ explicitly. It suffices to keep indices of nonzero entries in an array $p$ of size $k$.
+		\begin{algorithm}
+			\begin{algorithmic}[1]
+				\State Let $p := [0,1,\ldots,k-1]$.
+				\While{true}\Comment{Forever}
+					\State Visit current $k$-subset $\{S_{p[i]}~|~0\le i<k\}$.
+					\If{$p[0] = n-k$} \textbf{break}\Comment{This was the last subset; we are done} \EndIf
+					\State Find $i := \max\{i~|~p[i]+k-i\neq n\}$, the rightmost element we can still move to the right.
+					\State Set $j := 2$ and $r:=p[i]$, and increment $p[i] := p[i]+1$. 
+					\For{$i<\ell<k$}
+						\State Set $p[\ell] := r+j$ and then increment $j:=j+1$. \Comment{Also note that we have $j=2+(\ell-(i+1))$}
+					\EndFor
+				\EndWhile
+			\end{algorithmic}
+			\caption{Generating all $k$-subsets of a given $n$-set in lexiographic order.}
+			\label{algo:subsets}
+		\end{algorithm}
+		
+		\subsection{Analysis}
+			We now give simple analysis of the above algorithm. TODO: Proof of corretness; running time. 
+			
+			%Koraki \textbf{S2}--\textbf{S3} se bodo izvršili natanko $\binom{n}{k}$-krat, \textbf{S4} pa enkrat manj (dokaz). V \textbf{S2} nardimo največ $k$ korakov, podobno v \textbf{S4}. Torej velja $T(n,k)\le 2k\binom{n}{k}$.
+		
+		\subsection{Implementation.}
+			Listing~\ref{prog:subsets} is C implementation of algorithm~\ref{algo:subsets}.
+			\lstinputlisting[language=C,tabsize=2,basicstyle=\footnotesize,numbers=left,title=\lstname,caption={C implementation of algorithm~\ref{algo:subsets}},label={prog:subsets}]{subs.c}
+		
+		Compile the above code with \texttt{g++ -O3 subs.c -o subs}.
+	\section*{Acknowledgements}
+		I discovered this algorithm on a long train ride home in 2011, but only now decided to write it up as a note. I thank Uro\v{s} \v{C}ibej for pointing out that essentially the same algorithm is already described in Knuth's TAOCP Vol. 4, Fasc. 3.
+		
+\end{document}
